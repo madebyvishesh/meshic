@@ -2181,7 +2181,7 @@ input[type="color"] {
   .preview-icon-btn,
   .theme-switch,
   .header-btn {
-    transition-duration: 70ms;
+    transition-duration: 20ms;
     transition-timing-function: ease-out;
   }
 

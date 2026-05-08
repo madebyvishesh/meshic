@@ -46,6 +46,13 @@ const validPatternModes: PatternModeId[] = [
   "ordered-dither",
 ]
 
+const reconstructionPatternModes: PatternModeId[] = [
+  "halftone-dots",
+  "ascii-grid",
+  "scanline-reconstruction",
+  "ordered-dither",
+]
+
 const defaultEffectColor: EffectColorSettings = {
   useOriginalColors: true,
   customColors: false,
@@ -1042,13 +1049,21 @@ export default function App() {
   }, [loadDefaultSource, resetControlSettings, showToast])
 
   const resetCurrentMode = useCallback(() => {
+    setStandaloneViewScale(1)
     setModeSettings((current) => {
-      if (selectedMode === "lego-mosaic") return { ...current, legoMosaic: defaultModeSettings.legoMosaic }
-      if (selectedMode === "masked-grid-shimmer") return { ...current, maskedGrid: defaultModeSettings.maskedGrid }
-      if (selectedMode === "node-graph") return { ...current, nodeGraph: defaultModeSettings.nodeGraph }
-      if (selectedMode === "starburst") return { ...current, starburst: defaultModeSettings.starburst }
-      if (selectedMode === "flannel") return { ...current, flannel: defaultModeSettings.flannel }
-      return { ...current, reconstruction: defaultModeSettings.reconstruction }
+      const withToneReset = {
+        effectTone: {
+          ...current.effectTone,
+          [selectedMode]: { ...defaultEffectTones[selectedMode] },
+        },
+      }
+      if (selectedMode === "lego-mosaic") return { ...current, legoMosaic: defaultModeSettings.legoMosaic, ...withToneReset }
+      if (selectedMode === "masked-grid-shimmer") return { ...current, maskedGrid: defaultModeSettings.maskedGrid, ...withToneReset }
+      if (selectedMode === "node-graph") return { ...current, nodeGraph: defaultModeSettings.nodeGraph, ...withToneReset }
+      if (selectedMode === "starburst") return { ...current, starburst: defaultModeSettings.starburst, ...withToneReset }
+      if (selectedMode === "flannel") return { ...current, flannel: defaultModeSettings.flannel, ...withToneReset }
+      if (reconstructionPatternModes.includes(selectedMode)) return { ...current, reconstruction: defaultModeSettings.reconstruction, ...withToneReset }
+      return { ...current, ...withToneReset }
     })
     showToast("Current mode reset")
   }, [selectedMode, showToast])
