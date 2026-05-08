@@ -2167,6 +2167,33 @@ input[type="color"] {
   opacity: 1;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .mode-card,
+  .weave-btn.mode-card,
+  .preset-btn,
+  .upload-box,
+  .bg-opt-thumb,
+  .pill-btn,
+  .ghost-btn,
+  .download-btn,
+  .export-settings-toggle,
+  .section-reset,
+  .preview-icon-btn,
+  .theme-switch,
+  .header-btn {
+    transition-duration: 70ms;
+    transition-timing-function: ease-out;
+  }
+
+  .mode-card,
+  .weave-btn.mode-card,
+  .preset-btn,
+  .upload-box {
+    backface-visibility: hidden;
+    contain: paint;
+  }
+}
+
 .canvas-view {
   margin: 0;
   border-radius: calc(var(--radius-panel) - 3px);

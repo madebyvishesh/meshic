@@ -1668,7 +1668,7 @@ export default function App() {
                   {globalSettings.animationEnabled ? <Pause size={15} /> : <Play size={15} />}
                 </button>
               )}
-              <button className="preview-icon-btn" type="button" onClick={resetControlSettings} title="Reset controls">
+              <button className="preview-icon-btn" type="button" onClick={resetCurrentMode} title="Reset current effect">
                 <RefreshCw size={15} />
               </button>
               {standaloneMode && (
