@@ -754,11 +754,27 @@ export function generateNodeGraph(ctx: GenerateContext): PatternShape[] {
   return shapes
 }
 
+const bayer2 = [
+  [0, 2],
+  [3, 1],
+]
+
 const bayer4 = [
   [0, 8, 2, 10],
   [12, 4, 14, 6],
   [3, 11, 1, 9],
   [15, 7, 13, 5],
+]
+
+const bayer8 = [
+  [0, 32, 8, 40, 2, 34, 10, 42],
+  [48, 16, 56, 24, 50, 18, 58, 26],
+  [12, 44, 4, 36, 14, 46, 6, 38],
+  [60, 28, 52, 20, 62, 30, 54, 22],
+  [3, 35, 11, 43, 1, 33, 9, 41],
+  [51, 19, 59, 27, 49, 17, 57, 25],
+  [15, 47, 7, 39, 13, 45, 5, 37],
+  [63, 31, 55, 23, 61, 29, 53, 21],
 ]
 
 export function generateReconstruction(ctx: GenerateContext): PatternShape[] {
@@ -774,7 +790,7 @@ export function generateReconstruction(ctx: GenerateContext): PatternShape[] {
         if (!sample) continue
         const color = reconstructionSample(sample, tone, s)
         const value = sourceTone(color, s.invertColors)
-        const size = clamp(s.minDotSize + value * (s.maxDotSize - s.minDotSize), 0, s.dotSize)
+        const size = clamp(s.minDotSize + value * (s.maxDotSize - s.minDotSize), 0, s.maxDotSize)
         if (size < 0.2 || value < threshold) continue
         shapes.push(drawCell(`dot-${x}-${y}`, x, y, size, s.dotShape, displayColor(color, global, colors, s), customOpacity(color, colors, sample.a * s.dotOpacity, value), size * 0.12))
       }
@@ -823,10 +839,12 @@ export function generateReconstruction(ctx: GenerateContext): PatternShape[] {
         const sample = samplePoint(uploadedAsset, x, y, global)
         if (!sample) continue
         const color = reconstructionSample(sample, tone, s)
-        const matrixValue = bayer4[Math.floor(y / size) % 4][Math.floor(x / size) % 4] / 16
+        const ms = s.matrixSize === 2 ? 2 : s.matrixSize === 8 ? 8 : 4
+        const matrix = ms === 2 ? bayer2 : ms === 8 ? bayer8 : bayer4
+        const matrixValue = matrix[Math.floor(y / size) % ms][Math.floor(x / size) % ms] / (ms * ms)
         const value = sourceTone(color, s.invertColors)
         if (value * s.ditherStrength < matrixValue * (0.3 + tone.threshold / 100)) continue
-        shapes.push(drawCell(`dither-${x}-${y}`, x, y, size * 0.82, s.markShape, displayColor(color, global, colors, s), customOpacity(color, colors, sample.a, value), size * 0.08))
+        shapes.push(drawCell(`dither-${x}-${y}`, x, y, size * 0.82, s.markShape, displayColor(color, global, colors, s), customOpacity(color, colors, sample.a * s.dotOpacity, value), size * 0.08))
       }
     }
     return shapes

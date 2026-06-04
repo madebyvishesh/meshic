@@ -838,7 +838,7 @@ export default function App() {
       [group]: {
         ...current[group],
         [key]:
-          typeof value === "number" && Number.isInteger(current[group][key as keyof (typeof current)[typeof group]])
+          typeof value === "number" && Number.isInteger(value) && Number.isInteger(current[group][key as keyof (typeof current)[typeof group]])
             ? Math.round(value)
             : value,
       },
@@ -858,7 +858,7 @@ export default function App() {
       const groupSettings = current[group]
       const normalizedPatch = Object.fromEntries(Object.entries(patch).map(([key, value]) => [
         key,
-        typeof value === "number" && Number.isInteger(groupSettings[key as keyof typeof groupSettings])
+        typeof value === "number" && Number.isInteger(value) && Number.isInteger(groupSettings[key as keyof typeof groupSettings])
           ? Math.round(value)
           : value,
       ]))

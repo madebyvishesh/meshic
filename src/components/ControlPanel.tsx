@@ -650,7 +650,6 @@ export default function ControlPanel({
     if (selectedMode === "halftone-dots") {
       const spacing = randomRange(8, 30)
       onModeSettingChange("reconstruction", "gridSpacing", spacing)
-      onModeSettingChange("reconstruction", "dotSize", randomRange(Math.max(6, spacing * 0.5), spacing * 1.8))
       onModeSettingChange("reconstruction", "minDotSize", randomRange(0, 3, 0.25))
       onModeSettingChange("reconstruction", "maxDotSize", randomRange(spacing * 0.45, spacing * 1.4))
       onModeSettingChange("reconstruction", "dotShape", randomItem(["circle", "square", "diamond"]))
@@ -937,7 +936,7 @@ export default function ControlPanel({
             <SliderControl label="Gamma" value={effectTone.gamma} min={0} max={100} onChange={(value) => onEffectToneChange(selectedMode, "gamma", Math.round(value))} />
             {selectedMode === "masked-grid-shimmer" && (
               <>
-                <SliderControl label="Coverage Threshold" value={modeSettings.maskedGrid.coverageThreshold} min={0} max={1} step={0.01} onChange={setMask("coverageThreshold")} />
+                <SliderControl label="Coverage Threshold" value={Math.round(modeSettings.maskedGrid.coverageThreshold * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("maskedGrid", "coverageThreshold", v / 100)} />
                 <ToggleControl label="Invert Mask" value={modeSettings.maskedGrid.invertMask} onChange={(value) => onModeSettingChange("maskedGrid", "invertMask", value)} />
               </>
             )}
@@ -965,12 +964,12 @@ export default function ControlPanel({
               <SliderControl label="Grid Rows" value={modeSettings.legoMosaic.gridRows} min={12} max={72} onChange={setLego("gridRows")} />
               <SliderControl label="Cell Gap" value={modeSettings.legoMosaic.cellGap} min={0} max={8} step={0.25} onChange={setLego("cellGap")} />
               <SliderControl label="Tile Corner Radius" value={modeSettings.legoMosaic.tileCornerRadius} min={0} max={8} step={0.25} onChange={setLego("tileCornerRadius")} />
-              <SliderControl label="Stud Radius" value={modeSettings.legoMosaic.studRadius} min={0.18} max={0.48} step={0.01} onChange={setLego("studRadius")} />
-              <SliderControl label="Ring Thickness" value={modeSettings.legoMosaic.ringThickness} min={0.01} max={0.2} step={0.01} onChange={setLego("ringThickness")} />
+              <SliderControl label="Stud Radius" value={Math.round(modeSettings.legoMosaic.studRadius * 100)} min={18} max={48} step={1} suffix="%" onChange={(v) => onModeSettingChange("legoMosaic", "studRadius", v / 100)} />
+              <SliderControl label="Ring Thickness" value={Math.round(modeSettings.legoMosaic.ringThickness * 100)} min={1} max={20} step={1} suffix="%" onChange={(v) => onModeSettingChange("legoMosaic", "ringThickness", v / 100)} />
               <SliderControl label="Light Angle" value={modeSettings.legoMosaic.lightAngle} min={0} max={360} onChange={setLego("lightAngle")} />
-              <SliderControl label="Highlight" value={modeSettings.legoMosaic.highlightStrength} min={0} max={0.8} step={0.01} onChange={setLego("highlightStrength")} />
-              <SliderControl label="Shadow" value={modeSettings.legoMosaic.shadowStrength} min={0} max={0.8} step={0.01} onChange={setLego("shadowStrength")} />
-              <SliderControl label="Rim Strength" value={modeSettings.legoMosaic.rimStrength} min={0} max={1} step={0.01} onChange={setLego("rimStrength")} />
+              <SliderControl label="Highlight" value={Math.round(modeSettings.legoMosaic.highlightStrength * 100)} min={0} max={80} step={1} suffix="%" onChange={(v) => onModeSettingChange("legoMosaic", "highlightStrength", v / 100)} />
+              <SliderControl label="Shadow" value={Math.round(modeSettings.legoMosaic.shadowStrength * 100)} min={0} max={80} step={1} suffix="%" onChange={(v) => onModeSettingChange("legoMosaic", "shadowStrength", v / 100)} />
+              <SliderControl label="Rim Strength" value={Math.round(modeSettings.legoMosaic.rimStrength * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("legoMosaic", "rimStrength", v / 100)} />
             </>
           )}
 
@@ -992,11 +991,11 @@ export default function ControlPanel({
               <SliderControl label="Foreground Square" value={modeSettings.maskedGrid.foregroundSquareSize} min={3} max={24} onChange={setMask("foregroundSquareSize")} />
               <SliderControl label="Foreground Gap" value={modeSettings.maskedGrid.foregroundGridGap} min={0} max={12} onChange={setMask("foregroundGridGap")} />
               <SliderControl label="Foreground Speed" value={modeSettings.maskedGrid.foregroundSpeed} min={0} max={4} step={0.05} onChange={setMask("foregroundSpeed")} />
-              <SliderControl label="Foreground Flicker" value={modeSettings.maskedGrid.foregroundFlickerAmount} min={0} max={1} step={0.01} onChange={setMask("foregroundFlickerAmount")} />
+              <SliderControl label="Foreground Flicker" value={Math.round(modeSettings.maskedGrid.foregroundFlickerAmount * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("maskedGrid", "foregroundFlickerAmount", v / 100)} />
               <ToggleControl label="Background Grid" value={modeSettings.maskedGrid.backgroundGridEnabled} onChange={(value) => onModeSettingChange("maskedGrid", "backgroundGridEnabled", value)} />
               <ColorSwatchControl label="Background Grid Color" value={modeSettings.maskedGrid.backgroundGridColor} onChange={(value) => onModeSettingChange("maskedGrid", "backgroundGridColor", value)} />
               <SliderControl label="Background Square" value={modeSettings.maskedGrid.backgroundSquareSize} min={2} max={18} onChange={setMask("backgroundSquareSize")} />
-              <SliderControl label="Background Intensity" value={modeSettings.maskedGrid.backgroundGridIntensity} min={0} max={1} step={0.01} onChange={setMask("backgroundGridIntensity")} />
+              <SliderControl label="Background Intensity" value={Math.round(modeSettings.maskedGrid.backgroundGridIntensity * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("maskedGrid", "backgroundGridIntensity", v / 100)} />
             </>
           )}
 
@@ -1032,7 +1031,7 @@ export default function ControlPanel({
               <ToggleControl label="Show Connections" value={modeSettings.nodeGraph.showConnections} onChange={(value) => onModeSettingChange("nodeGraph", "showConnections", value)} />
               <SliderControl label="Max Distance" value={modeSettings.nodeGraph.maxDistance} min={30} max={200} suffix=" px" onChange={setNode("maxDistance")} />
               <SliderControl label="Line Thickness" value={modeSettings.nodeGraph.lineThickness} min={0.1} max={2} step={0.1} onChange={setNode("lineThickness")} />
-              <SliderControl label="Line Opacity" value={modeSettings.nodeGraph.lineOpacity} min={0} max={1} step={0.05} onChange={setNode("lineOpacity")} />
+              <SliderControl label="Line Opacity" value={Math.round(modeSettings.nodeGraph.lineOpacity * 100)} min={0} max={100} step={5} suffix="%" onChange={(v) => onModeSettingChange("nodeGraph", "lineOpacity", v / 100)} />
               <SelectControl
                 label="Motion Type"
                 value={modeSettings.nodeGraph.motionType}
@@ -1045,7 +1044,7 @@ export default function ControlPanel({
                 ]}
               />
               <SliderControl label="Motion Speed" value={modeSettings.nodeGraph.motionSpeed} min={0} max={3} step={0.05} onChange={setNode("motionSpeed")} />
-              <SliderControl label="Turbulence" value={modeSettings.nodeGraph.turbulence} min={0} max={1} step={0.05} onChange={setNode("turbulence")} />
+              <SliderControl label="Turbulence" value={Math.round(modeSettings.nodeGraph.turbulence * 100)} min={0} max={100} step={5} suffix="%" onChange={(v) => onModeSettingChange("nodeGraph", "turbulence", v / 100)} />
               <SelectControl
                 label="Distribution"
                 value={modeSettings.nodeGraph.distribution}
@@ -1079,10 +1078,10 @@ export default function ControlPanel({
               <SliderControl label="Ray Count" value={modeSettings.starburst.rayCount} min={10} max={80} onChange={setStarburst("rayCount")} />
               <SliderControl label="Ray Length Min" value={modeSettings.starburst.rayLenMin} min={30} max={300} suffix=" px" onChange={setStarburst("rayLenMin")} />
               <SliderControl label="Ray Length Max" value={modeSettings.starburst.rayLenMax} min={100} max={600} suffix=" px" onChange={setStarburst("rayLenMax")} />
-              <SliderControl label="Cluster Bias" value={modeSettings.starburst.clusterBias} min={0} max={1} step={0.01} onChange={setStarburst("clusterBias")} />
+              <SliderControl label="Cluster Bias" value={Math.round(modeSettings.starburst.clusterBias * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("starburst", "clusterBias", v / 100)} />
               <SliderControl label="Cluster Direction" value={modeSettings.starburst.clusterDirection} min={0} max={360} suffix="°" onChange={setStarburst("clusterDirection")} />
               <ToggleControl label="Secondary Nodes" value={modeSettings.starburst.secondaryNodes} onChange={(value) => onModeSettingChange("starburst", "secondaryNodes", value)} />
-              <SliderControl label="Secondary Chance" value={modeSettings.starburst.secondaryChance} min={0} max={1} step={0.01} onChange={setStarburst("secondaryChance")} />
+              <SliderControl label="Secondary Chance" value={Math.round(modeSettings.starburst.secondaryChance * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("starburst", "secondaryChance", v / 100)} />
               <SliderControl label="Hub X Offset" value={modeSettings.starburst.hubX} min={-300} max={300} suffix=" px" onChange={setStarburst("hubX")} />
               <SliderControl label="Hub Y Offset" value={modeSettings.starburst.hubY} min={-300} max={300} suffix=" px" onChange={setStarburst("hubY")} />
               <SliderControl label="Hub Size" value={modeSettings.starburst.hubSize} min={4} max={20} step={0.5} suffix=" px" onChange={setStarburst("hubSize")} />
@@ -1091,7 +1090,7 @@ export default function ControlPanel({
               <SliderControl label="Node Size Max" value={modeSettings.starburst.nodeSizeMax} min={4} max={16} step={0.5} suffix=" px" onChange={setStarburst("nodeSizeMax")} />
               <SliderControl label="Node Glow" value={modeSettings.starburst.nodeGlow} min={0} max={30} onChange={setStarburst("nodeGlow")} />
               <ColorSwatchControl label="Line Color" value={modeSettings.starburst.lineColor} onChange={(value) => onModeSettingChange("starburst", "lineColor", value)} />
-              <SliderControl label="Line Opacity" value={modeSettings.starburst.lineOpacity} min={0.05} max={1} step={0.01} onChange={setStarburst("lineOpacity")} />
+              <SliderControl label="Line Opacity" value={Math.round(modeSettings.starburst.lineOpacity * 100)} min={5} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("starburst", "lineOpacity", v / 100)} />
               <SliderControl label="Line Width" value={modeSettings.starburst.lineWidth} min={0.3} max={2} step={0.1} suffix=" px" onChange={setStarburst("lineWidth")} />
               <SliderControl label="Sway Intensity" value={modeSettings.starburst.swayIntensity} min={0} max={3} step={0.05} onChange={setStarburst("swayIntensity")} />
               <SliderControl label="Pulse Speed" value={modeSettings.starburst.pulseSpeed} min={0} max={3} step={0.05} onChange={setStarburst("pulseSpeed")} />
@@ -1106,9 +1105,19 @@ export default function ControlPanel({
               {selectedMode === "halftone-dots" && (
                 <>
                   <SliderControl label="Grid Spacing" value={modeSettings.reconstruction.gridSpacing} min={4} max={36} onChange={setRecon("gridSpacing")} />
-                  <SliderControl label="Dot Size" value={modeSettings.reconstruction.dotSize} min={1} max={36} onChange={setRecon("dotSize")} />
                   <SliderControl label="Min Dot Size" value={modeSettings.reconstruction.minDotSize} min={0} max={8} step={0.25} onChange={setRecon("minDotSize")} />
                   <SliderControl label="Max Dot Size" value={modeSettings.reconstruction.maxDotSize} min={2} max={36} onChange={setRecon("maxDotSize")} />
+                  <SliderControl label="Dot Opacity" value={Math.round(modeSettings.reconstruction.dotOpacity * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("reconstruction", "dotOpacity", v / 100)} />
+                  <PillGroup
+                    label="Dot Shape"
+                    value={modeSettings.reconstruction.dotShape}
+                    onChange={(value) => onModeSettingChange("reconstruction", "dotShape", value)}
+                    options={[
+                      { label: "Circle", value: "circle" },
+                      { label: "Square", value: "square" },
+                      { label: "Diamond", value: "diamond" },
+                    ]}
+                  />
                 </>
               )}
               {selectedMode === "ascii-grid" && (
@@ -1125,6 +1134,7 @@ export default function ControlPanel({
                   <SliderControl label="Character Size" value={modeSettings.reconstruction.characterSize} min={6} max={32} onChange={setRecon("characterSize")} />
                   <SliderControl label="Spacing X" value={modeSettings.reconstruction.characterSpacingX} min={4} max={30} onChange={setRecon("characterSpacingX")} />
                   <SliderControl label="Spacing Y" value={modeSettings.reconstruction.characterSpacingY} min={6} max={36} onChange={setRecon("characterSpacingY")} />
+                  <SliderControl label="Text Opacity" value={Math.round(modeSettings.reconstruction.textOpacity * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("reconstruction", "textOpacity", v / 100)} />
                 </>
               )}
               {selectedMode === "scanline-reconstruction" && (
@@ -1132,16 +1142,40 @@ export default function ControlPanel({
                   <SliderControl label="Line Spacing" value={modeSettings.reconstruction.lineSpacing} min={2} max={24} onChange={setRecon("lineSpacing")} />
                   <SliderControl label="Line Thickness" value={modeSettings.reconstruction.lineThickness} min={0.5} max={8} step={0.25} onChange={setRecon("lineThickness")} />
                   <SliderControl label="Line Length" value={modeSettings.reconstruction.lineLength} min={4} max={44} onChange={setRecon("lineLength")} />
+                  <SliderControl label="Opacity" value={Math.round(modeSettings.reconstruction.scanlineOpacity * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("reconstruction", "scanlineOpacity", v / 100)} />
                 </>
               )}
               {selectedMode === "ordered-dither" && (
                 <>
                   <SliderControl label="Dither Strength" value={modeSettings.reconstruction.ditherStrength} min={0.2} max={2.5} step={0.05} onChange={setRecon("ditherStrength")} />
                   <SliderControl label="Mark Size" value={modeSettings.reconstruction.markSize} min={2} max={18} onChange={setRecon("markSize")} />
+                  <PillGroup
+                    label="Mark Shape"
+                    value={modeSettings.reconstruction.markShape}
+                    onChange={(value) => onModeSettingChange("reconstruction", "markShape", value)}
+                    options={[
+                      { label: "Square", value: "square" },
+                      { label: "Circle", value: "circle" },
+                      { label: "Diamond", value: "diamond" },
+                    ]}
+                  />
+                  <PillGroup
+                    label="Matrix"
+                    value={String(modeSettings.reconstruction.matrixSize)}
+                    onChange={(value) => onModeSettingChange("reconstruction", "matrixSize", Number(value))}
+                    options={[
+                      { label: "2×2", value: "2" },
+                      { label: "4×4", value: "4" },
+                      { label: "8×8", value: "8" },
+                    ]}
+                  />
+                  <SliderControl label="Mark Opacity" value={Math.round(modeSettings.reconstruction.dotOpacity * 100)} min={0} max={100} step={1} suffix="%" onChange={(v) => onModeSettingChange("reconstruction", "dotOpacity", v / 100)} />
                 </>
               )}
               <ToggleControl label="Posterize Colors" value={modeSettings.reconstruction.posterizeColors} onChange={(value) => onModeSettingChange("reconstruction", "posterizeColors", value)} />
-              <SliderControl label="Color Levels" value={modeSettings.reconstruction.colorLevels} min={2} max={16} onChange={setRecon("colorLevels")} />
+              {modeSettings.reconstruction.posterizeColors && (
+                <SliderControl label="Color Levels" value={modeSettings.reconstruction.colorLevels} min={2} max={16} onChange={setRecon("colorLevels")} />
+              )}
             </>
           )}
           <button className="ghost-btn" type="button" onClick={randomizeEffectControls}>Randomize</button>
