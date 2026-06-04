@@ -723,26 +723,34 @@ export default function App() {
     let raf = 0
     let lastSampleTime = 0
     const sampleInterval = 1000 / Math.max(4, Math.min(8, globalSettings.fps))
+
+    // Create one reusable canvas for the lifetime of this video — avoids allocating
+    // a new canvas + PNG-encoding it (toDataURL) on every single frame tick.
+    const maxSampleSize = 720
+    const sampleScale = Math.min(1, maxSampleSize / Math.max(asset.width, asset.height))
+    const sampleWidth = Math.max(1, Math.round(asset.width * sampleScale))
+    const sampleHeight = Math.max(1, Math.round(asset.height * sampleScale))
+    const offscreen = document.createElement("canvas")
+    offscreen.width = sampleWidth
+    offscreen.height = sampleHeight
+    const offscreenCtx = offscreen.getContext("2d", { willReadFrequently: true })
+
     const tick = (now: number) => {
       const currentAsset = uploadedAssetRef.current
       if (!currentAsset?.animated || !currentAsset.mediaId || currentAsset.mediaId !== asset.mediaId || !currentAsset.visible) return
       const element = mediaElementsRef.current.get(currentAsset.mediaId)
-      if (!element) return
+      if (!element || !offscreenCtx) return
       if (now - lastSampleTime >= sampleInterval) {
         lastSampleTime = now
         try {
-          const frame = sampleMediaElement(
-            element,
-            currentAsset.width,
-            currentAsset.height,
-            currentAsset.mediaType === "video" || Boolean(currentAsset.animated),
-          )
+          offscreenCtx.drawImage(element, 0, 0, sampleWidth, sampleHeight)
+          const { data } = offscreenCtx.getImageData(0, 0, sampleWidth, sampleHeight)
           setUploadedAsset((current) => {
             if (!current || current.mediaId !== currentAsset.mediaId) return current
-            return { ...current, sample: frame.sample, previewHref: frame.previewHref ?? current.previewHref }
+            return { ...current, sample: { width: sampleWidth, height: sampleHeight, data } }
           })
         } catch {
-          // Some video frames can be temporarily unavailable while decoding. Keep the previous sample.
+          // Frame temporarily unavailable during video decoding — keep previous sample.
         }
       }
       raf = requestAnimationFrame(tick)
