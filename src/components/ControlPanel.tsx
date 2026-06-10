@@ -1,7 +1,7 @@
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core"
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { RotateCcw } from "lucide-react"
+import { ChevronsUpDown, RotateCcw } from "lucide-react"
 import type { CSSProperties, ReactNode } from "react"
 import { useEffect, useRef, useState } from "react"
 import { EffectColorSettings, EffectToneSettings, FlannelSettings, FlannelStripe, GlobalSettings, ModeSettings, PatternModeId, UploadedAsset } from "../types"
@@ -255,17 +255,66 @@ function SliderControl({
   onChange: (value: number) => void
   suffix?: string
 }) {
-  const pct = ((value - min) / (max - min)) * 100
+  const [draftValue, setDraftValue] = useState(value)
+  const frameRef = useRef<number | null>(null)
+  const pendingValueRef = useRef(value)
+  const pct = ((draftValue - min) / (max - min)) * 100
+  const indicatorPosition = `calc(${pct}% + ${7 - pct * 0.14}px)`
+  const fillPosition = `calc(${pct}% + ${14 - pct * 0.14}px)`
+  const firstTick = Math.ceil(min)
+  const lastTick = Math.floor(max)
+  const tickValues = lastTick - firstTick >= 1 && lastTick <= 10
+    ? Array.from({ length: lastTick - firstTick + 1 }, (_, index) => firstTick + index)
+    : []
+
+  useEffect(() => {
+    setDraftValue(value)
+  }, [value])
+
+  useEffect(() => () => {
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
+  }, [])
+
+  const updateValue = (nextValue: number) => {
+    setDraftValue(nextValue)
+    pendingValueRef.current = nextValue
+    if (frameRef.current !== null) return
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null
+      onChange(pendingValueRef.current)
+    })
+  }
+
   return (
     <label className="control-row">
       <span className="control-label">
         <span className="control-name">{label}</span>
         <span className="control-val">
-          {Number.isInteger(step) ? Math.round(value) : Number(value).toFixed(step < 0.1 ? 2 : 1)}
+          {Number.isInteger(step) ? Math.round(draftValue) : Number(draftValue).toFixed(step < 0.1 ? 2 : 1)}
           {suffix}
         </span>
       </span>
-      <input className="slider" type="range" min={min} max={max} step={step} value={value} style={{ "--value-percent": `${pct}%` } as CSSProperties} onChange={(event) => onChange(Number(event.target.value))} />
+      <span
+        className="slider-shell"
+        style={{
+          "--value-percent": `${pct}%`,
+          "--indicator-position": indicatorPosition,
+          "--fill-position": fillPosition,
+        } as CSSProperties}
+      >
+        <input className="slider" type="range" min={min} max={max} step={step} value={draftValue} onChange={(event) => updateValue(Number(event.target.value))} />
+        {tickValues.length > 0 && (
+          <span className="slider-ticks" aria-hidden="true">
+            {tickValues.map((tick) => (
+              <i
+                key={tick}
+                style={{ left: `${((tick - min) / (max - min)) * 100}%` }}
+              />
+            ))}
+          </span>
+        )}
+        <span className="slider-indicator" aria-hidden="true" />
+      </span>
     </label>
   )
 }
@@ -297,12 +346,15 @@ function PillGroup<T extends string>({ label, options, value, onChange }: { labe
 function SelectControl<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: Array<{ label: string; value: T; disabled?: boolean }>; onChange: (value: T) => void }) {
   return (
     <label className="control-row">
-      <span className="control-sublabel">{label}</span>
-      <select className="export-select" value={value} onChange={(event) => onChange(event.target.value as T)}>
-        {options.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.disabled}>{option.label}</option>
-        ))}
-      </select>
+      <span className="select-shell">
+        <span className="select-label" aria-hidden="true">{label}</span>
+        <select className="export-select" aria-label={label} value={value} onChange={(event) => onChange(event.target.value as T)}>
+          {options.map((option) => (
+            <option key={option.value} value={option.value} disabled={option.disabled}>{option.label}</option>
+          ))}
+        </select>
+        <ChevronsUpDown className="select-chevron" size={16} aria-hidden="true" />
+      </span>
     </label>
   )
 }

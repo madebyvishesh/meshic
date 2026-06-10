@@ -19,11 +19,13 @@ import { downloadFile, exportSvg, serializeSvg } from "./utils/exportSvg"
 type Theme = "dark" | "light"
 type ExportFormat = "svg" | "png" | "gif" | "mp4"
 type BackgroundChoice = "transparent" | "dark" | "mid" | "light" | "white" | "custom"
+type ThemeViewTransition = {
+  ready: Promise<void>
+  finished: Promise<void>
+  skipTransition?: () => void
+}
 type ViewTransitionDocument = Document & {
-  startViewTransition?: (callback: () => void) => {
-    ready: Promise<void>
-    finished: Promise<void>
-  }
+  startViewTransition?: (callback: () => void) => ThemeViewTransition
 }
 
 const storageKey = "pattern-generator-v6"
@@ -638,8 +640,15 @@ export default function App() {
   const saveTimeoutRef = useRef<number | null>(null)
   const copyStatusTimeoutRef = useRef<number | null>(null)
   const appBodyRef = useRef<HTMLElement>(null)
+  const themeSwitchRef = useRef<HTMLButtonElement>(null)
+  const themeRef = useRef(theme)
+  const activeThemeTransitionRef = useRef<ThemeViewTransition | null>(null)
+  const themeTransitionIdRef = useRef(0)
+  const toggleThemeRef = useRef<(event?: MouseEvent<HTMLButtonElement>) => void>(() => {})
+  const interceptedThemePointerRef = useRef(0)
 
   useEffect(() => {
+    themeRef.current = theme
     document.documentElement.dataset.theme = theme
   }, [theme])
 
@@ -951,7 +960,8 @@ export default function App() {
   }, [])
 
   const toggleTheme = useCallback((event?: MouseEvent<HTMLButtonElement>) => {
-    const nextTheme = theme === "dark" ? "light" : "dark"
+    const nextTheme = themeRef.current === "dark" ? "light" : "dark"
+    themeRef.current = nextTheme
     const adaptStarterSource = Boolean(uploadedAssetRef.current?.isDefaultSource)
     const commitTheme = () => {
       setTheme(nextTheme)
@@ -965,7 +975,7 @@ export default function App() {
       return
     }
 
-    const rect = event?.currentTarget.getBoundingClientRect()
+    const rect = event?.currentTarget.getBoundingClientRect() ?? themeSwitchRef.current?.getBoundingClientRect()
     const x = rect ? rect.left + rect.width / 2 : window.innerWidth - 32
     const y = rect ? rect.top + rect.height / 2 : 26
     const radius = Math.ceil(Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)) + 96)
@@ -974,14 +984,71 @@ export default function App() {
     rootStyle.setProperty("--theme-wipe-y", `${y}px`)
     rootStyle.setProperty("--theme-wipe-radius", `${radius}px`)
     document.documentElement.classList.add("theme-wipe-active")
+    document.documentElement.classList.add("theme-switch-cursor")
 
-    const transition = transitionDocument.startViewTransition(() => {
-      flushSync(commitTheme)
-    })
-    transition.finished.finally(() => {
+    activeThemeTransitionRef.current?.skipTransition?.()
+    const transitionId = themeTransitionIdRef.current + 1
+    themeTransitionIdRef.current = transitionId
+
+    try {
+      const transition = transitionDocument.startViewTransition(() => {
+        flushSync(commitTheme)
+      })
+      activeThemeTransitionRef.current = transition
+      transition.finished.finally(() => {
+        if (themeTransitionIdRef.current !== transitionId) return
+        activeThemeTransitionRef.current = null
+        document.documentElement.classList.remove("theme-wipe-active")
+        document.documentElement.classList.remove("theme-switch-cursor")
+      })
+    } catch {
+      commitTheme()
+      activeThemeTransitionRef.current = null
       document.documentElement.classList.remove("theme-wipe-active")
-    })
-  }, [applyThemeToCanvas, theme])
+      document.documentElement.classList.remove("theme-switch-cursor")
+    }
+  }, [applyThemeToCanvas])
+
+  toggleThemeRef.current = toggleTheme
+
+  useEffect(() => {
+    const pointerIsOverThemeSwitch = (event: PointerEvent) => {
+      const rect = themeSwitchRef.current?.getBoundingClientRect()
+      if (!rect) return false
+      return (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      )
+    }
+
+    const handleThemePointerMove = (event: PointerEvent) => {
+      if (!document.documentElement.classList.contains("theme-wipe-active")) {
+        document.documentElement.classList.remove("theme-switch-cursor")
+        return
+      }
+      document.documentElement.classList.toggle("theme-switch-cursor", pointerIsOverThemeSwitch(event))
+    }
+
+    const handleThemePointerDuringWipe = (event: PointerEvent) => {
+      if (!document.documentElement.classList.contains("theme-wipe-active")) return
+      if (!pointerIsOverThemeSwitch(event)) return
+
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      interceptedThemePointerRef.current = window.performance.now()
+      toggleThemeRef.current()
+    }
+
+    window.addEventListener("pointermove", handleThemePointerMove, true)
+    window.addEventListener("pointerdown", handleThemePointerDuringWipe, true)
+    return () => {
+      window.removeEventListener("pointermove", handleThemePointerMove, true)
+      window.removeEventListener("pointerdown", handleThemePointerDuringWipe, true)
+      document.documentElement.classList.remove("theme-switch-cursor")
+    }
+  }, [])
 
   const resizeCanvasToUploadedAsset = useCallback((width: number, height: number) => {
     const nextSize = getCanvasSizeForAsset(width, height)
@@ -1607,8 +1674,20 @@ export default function App() {
         <button className="header-btn" type="button" onClick={resetAll}>
           <RotateCcw size={14} /> Reset
         </button>
-        <button className="theme-switch" type="button" aria-label="Toggle theme" onClick={(event) => toggleTheme(event)}>
-          {theme === "dark" ? <Moon size={15} /> : <Sun size={15} />}
+        <button
+          ref={themeSwitchRef}
+          className="theme-switch"
+          type="button"
+          aria-label="Toggle theme"
+          onClick={(event) => {
+            if (window.performance.now() - interceptedThemePointerRef.current < 500) return
+            toggleTheme(event)
+          }}
+        >
+          <span className="theme-icon-stack" aria-hidden="true">
+            <Moon className={`theme-icon theme-icon-moon ${theme === "dark" ? "active" : ""}`} size={15} />
+            <Sun className={`theme-icon theme-icon-sun ${theme === "light" ? "active" : ""}`} size={15} />
+          </span>
         </button>
       </header>
 
