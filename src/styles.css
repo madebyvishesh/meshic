@@ -462,6 +462,9 @@ button {
   overflow: hidden;
   isolation: isolate;
   background: var(--slider-track);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .slider-shell::before {
@@ -512,7 +515,8 @@ button {
   background: color-mix(in srgb, var(--foreground) 68%, transparent);
 }
 
-.slider-shell:has(.slider:active) .slider-indicator {
+.slider-shell:has(.slider:active) .slider-indicator,
+.slider-shell.is-dragging .slider-indicator {
   width: 5px;
   background: color-mix(in srgb, var(--foreground) 76%, transparent);
 }

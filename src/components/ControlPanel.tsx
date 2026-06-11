@@ -2,7 +2,7 @@ import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { ChevronsUpDown, RotateCcw } from "lucide-react"
-import type { CSSProperties, ReactNode } from "react"
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from "react"
 import { useEffect, useRef, useState } from "react"
 import { EffectColorSettings, EffectToneSettings, FlannelSettings, FlannelStripe, GlobalSettings, ModeSettings, PatternModeId, UploadedAsset } from "../types"
 import { cloneFlannelSettings, createFlannelStripe, defaultFlannelSettings, drawFlannelFrame, flannelPresets } from "../utils/flannel"
@@ -256,8 +256,10 @@ function SliderControl({
   suffix?: string
 }) {
   const [draftValue, setDraftValue] = useState(value)
+  const [isDragging, setIsDragging] = useState(false)
   const frameRef = useRef<number | null>(null)
   const pendingValueRef = useRef(value)
+  const activePointerRef = useRef<number | null>(null)
   const pct = ((draftValue - min) / (max - min)) * 100
   const indicatorPosition = `calc(${pct}% + ${7 - pct * 0.14}px)`
   const fillPosition = `calc(${pct}% + ${14 - pct * 0.14}px)`
@@ -285,6 +287,40 @@ function SliderControl({
     })
   }
 
+  const updateFromPointer = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    if (bounds.width <= 0) return
+    const ratio = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width))
+    const steps = Math.round((min + ratio * (max - min) - min) / step)
+    const precision = Math.max(0, (String(step).split(".")[1] ?? "").length)
+    const nextValue = Number(Math.min(max, Math.max(min, min + steps * step)).toFixed(precision))
+    updateValue(nextValue)
+  }
+
+  const beginPointerDrag = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (event.button !== 0 && event.pointerType === "mouse") return
+    activePointerRef.current = event.pointerId
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setIsDragging(true)
+    updateFromPointer(event)
+    event.preventDefault()
+  }
+
+  const continuePointerDrag = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (activePointerRef.current !== event.pointerId) return
+    updateFromPointer(event)
+    event.preventDefault()
+  }
+
+  const endPointerDrag = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (activePointerRef.current !== event.pointerId) return
+    activePointerRef.current = null
+    setIsDragging(false)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
+
   return (
     <label className="control-row">
       <span className="control-label">
@@ -295,12 +331,20 @@ function SliderControl({
         </span>
       </span>
       <span
-        className="slider-shell"
+        className={`slider-shell ${isDragging ? "is-dragging" : ""}`}
         style={{
           "--value-percent": `${pct}%`,
           "--indicator-position": indicatorPosition,
           "--fill-position": fillPosition,
         } as CSSProperties}
+        onPointerDown={beginPointerDrag}
+        onPointerMove={continuePointerDrag}
+        onPointerUp={endPointerDrag}
+        onPointerCancel={endPointerDrag}
+        onLostPointerCapture={() => {
+          activePointerRef.current = null
+          setIsDragging(false)
+        }}
       >
         <input className="slider" type="range" min={min} max={max} step={step} value={draftValue} onChange={(event) => updateValue(Number(event.target.value))} />
         {tickValues.length > 0 && (
